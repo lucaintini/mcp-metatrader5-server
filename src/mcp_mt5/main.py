@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 import MetaTrader5 as mt5
@@ -1417,6 +1417,52 @@ def orders_get_by_ticket(ticket: int) -> dict[str, Any] | None:
     return order[0]._asdict()
 
 
+def _call_mt5_history(
+    mt5_func: Any,
+    symbol: str | None,
+    group: str | None,
+    ticket: int | None,
+    position: int | None,
+    from_date: datetime | None,
+    to_date: datetime | None,
+) -> Any:
+    """
+    Call an MT5 history_*_get function using its actual calling convention.
+
+    The MT5 Python API only accepts the date range positionally and only
+    supports `group`, `ticket` and `position` as keyword arguments. Ticket and
+    position lookups are standalone: they cannot be combined with a date range
+    or a group filter. Anything else fails with error -2 "Invalid parameters".
+
+    Args:
+        mt5_func: Either mt5.history_orders_get or mt5.history_deals_get
+        symbol: Symbol name, applied as a group filter since MT5 has no symbol filter
+        group: Filter for arranging a group of orders/deals
+        ticket: Order/deal ticket
+        position: Position ticket
+        from_date: Start of the date range
+        to_date: End of the date range
+
+    Returns:
+        The raw MT5 result: a tuple of named tuples, or None on failure.
+    """
+    if ticket is not None:
+        return mt5_func(ticket=ticket)
+
+    if position is not None:
+        return mt5_func(position=position)
+
+    # MT5 requires both dates, so fall back to the widest sensible range.
+    date_from = from_date if from_date is not None else datetime(1970, 1, 1)
+    date_to = to_date if to_date is not None else datetime.now() + timedelta(days=1)
+
+    group_filter = group if group is not None else symbol
+    if group_filter is not None:
+        return mt5_func(date_from, date_to, group=group_filter)
+
+    return mt5_func(date_from, date_to)
+
+
 # Get history orders
 @mcp.tool()
 def history_orders_get(
@@ -1428,38 +1474,22 @@ def history_orders_get(
     to_date: datetime | None = None,
 ) -> list[HistoryOrder]:
     """
-    Get orders from history within the specified date range.
+    Get orders from history.
 
     Args:
-        symbol: Symbol name
-        group: Filter for arranging a group of orders
-        ticket: Order ticket
-        position: Position ticket
-        from_date: Start date for order retrieval
-        to_date: End date for order retrieval
+        symbol: Symbol name, used as a filter (e.g. "EURUSD"). Ignored when group is given.
+        group: Filter for arranging a group of orders (e.g., "*", "USD*")
+        ticket: Order ticket. Looked up on its own; other filters are ignored.
+        position: Position ticket. Looked up on its own; other filters are ignored.
+        from_date: Start date for order retrieval. Defaults to the epoch.
+        to_date: End date for order retrieval. Defaults to tomorrow.
 
     Returns:
         List[HistoryOrder]: List of historical orders.
     """
-    request = {}
-    if symbol is not None:
-        request["symbol"] = symbol
-    if group is not None:
-        request["group"] = group
-    if ticket is not None:
-        request["ticket"] = ticket
-    if position is not None:
-        request["position"] = position
-    if from_date is not None:
-        request["from"] = from_date
-    if to_date is not None:
-        request["to"] = to_date
-
-    # Get history orders
-    if request:
-        orders = mt5.history_orders_get(**request)
-    else:
-        orders = mt5.history_orders_get()
+    orders = _call_mt5_history(
+        mt5.history_orders_get, symbol, group, ticket, position, from_date, to_date
+    )
 
     if orders is None:
         logger.error(f"Failed to get history orders, error code: {mt5.last_error()}")
@@ -1485,38 +1515,22 @@ def history_deals_get(
     to_date: datetime | None = None,
 ) -> list[Deal]:
     """
-    Get deals from history within the specified date range.
+    Get deals from history.
 
     Args:
-        symbol: Symbol name
-        group: Filter for arranging a group of deals
-        ticket: Deal ticket
-        position: Position ticket
-        from_date: Start date for deal retrieval
-        to_date: End date for deal retrieval
+        symbol: Symbol name, used as a filter (e.g. "EURUSD"). Ignored when group is given.
+        group: Filter for arranging a group of deals (e.g., "*", "USD*")
+        ticket: Deal ticket. Looked up on its own; other filters are ignored.
+        position: Position ticket. Looked up on its own; other filters are ignored.
+        from_date: Start date for deal retrieval. Defaults to the epoch.
+        to_date: End date for deal retrieval. Defaults to tomorrow.
 
     Returns:
         List[Deal]: List of historical deals.
     """
-    request = {}
-    if symbol is not None:
-        request["symbol"] = symbol
-    if group is not None:
-        request["group"] = group
-    if ticket is not None:
-        request["ticket"] = ticket
-    if position is not None:
-        request["position"] = position
-    if from_date is not None:
-        request["from"] = from_date
-    if to_date is not None:
-        request["to"] = to_date
-
-    # Get history deals
-    if request:
-        deals = mt5.history_deals_get(**request)
-    else:
-        deals = mt5.history_deals_get()
+    deals = _call_mt5_history(
+        mt5.history_deals_get, symbol, group, ticket, position, from_date, to_date
+    )
 
     if deals is None:
         logger.error(f"Failed to get history deals, error code: {mt5.last_error()}")

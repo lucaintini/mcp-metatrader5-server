@@ -307,15 +307,15 @@ Get active pending orders.
 
 ### `history_orders_get(...) -> List[HistoryOrder]`
 
-Get orders from history within a specified date range.
+Get orders from history.
 
 **Parameters:**
-- `symbol` (str, optional): Filter by symbol
-- `group` (str, optional): Filter by group
-- `ticket` (int, optional): Filter by ticket
-- `position` (int, optional): Filter by position ticket
-- `from_date` (datetime, optional): Start date
-- `to_date` (datetime, optional): End date
+- `symbol` (str, optional): Filter by symbol. Ignored when `group` is given
+- `group` (str, optional): Filter by group pattern (e.g., `"*"`, `"USD*"`)
+- `ticket` (int, optional): Look up a single order by ticket. Other filters are ignored
+- `position` (int, optional): Look up orders of one position ticket. Other filters are ignored
+- `from_date` (datetime, optional): Start date. Defaults to 1970-01-01
+- `to_date` (datetime, optional): End date. Defaults to tomorrow
 
 **Returns:**
 - `List[HistoryOrder]`: List of historical orders
@@ -324,7 +324,7 @@ Get orders from history within a specified date range.
 
 ### `history_deals_get(...) -> List[Deal]`
 
-Get deals from history within a specified date range.
+Get deals from history.
 
 **Parameters:**
 - Similar to `history_orders_get()`
