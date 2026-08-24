@@ -327,7 +327,8 @@ Get orders from history.
 Get deals from history.
 
 **Parameters:**
-- Similar to `history_orders_get()`
+- Similar to `history_orders_get()`, except that `ticket` is the ticket of the *order* whose
+  deals should be returned (MT5 matches it against `DEAL_ORDER`), not a deal ticket
 
 **Returns:**
 - `List[Deal]`: List of historical deals

@@ -132,15 +132,16 @@ def test_history_deals_get_group_takes_precedence_over_symbol(mock_history):
 
 
 @pytest.mark.unit
-def test_history_deals_get_by_ticket_ignores_other_filters(mock_history):
+def test_history_deals_get_by_order_ticket_ignores_other_filters(mock_history):
+    # For deals, MT5 matches ticket against the deal's order (DEAL_ORDER).
     history_deals_get(
-        ticket=1001,
+        ticket=DEAL["order"],
         symbol="EURUSD",
         from_date=datetime(2020, 1, 1),
         to_date=datetime(2026, 1, 1),
     )
 
-    mock_history.history_deals_get.assert_called_once_with(ticket=1001)
+    mock_history.history_deals_get.assert_called_once_with(ticket=DEAL["order"])
 
 
 @pytest.mark.unit
