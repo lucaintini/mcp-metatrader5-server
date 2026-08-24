@@ -98,15 +98,16 @@ uv run pytest tests/test_timeframes.py::TestTimeframeValidation::test_valid_time
 import pytest
 from unittest.mock import patch
 
+
 @pytest.mark.unit
 def test_my_function():
     """Test description."""
     # Arrange
     expected = "result"
-    
+
     # Act
     result = my_function()
-    
+
     # Assert
     assert result == expected
 ```
@@ -115,6 +116,7 @@ def test_my_function():
 
 ```python
 import pytest
+
 
 @pytest.mark.integration
 def test_mt5_connection():
