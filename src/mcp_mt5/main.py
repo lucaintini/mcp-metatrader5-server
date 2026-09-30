@@ -653,7 +653,8 @@ def login(login: int | None = None, password: str | None = None, server: str | N
     try:
         ok = mt5.login(login=login, password=password, server=server)
     except Exception as e:
-        raise RuntimeError(f"MT5 login raised an error: {_redact(str(e), password)}")
+        # "from None": the original exception may carry the password, and FastMCP logs chained tracebacks
+        raise RuntimeError(f"MT5 login raised an error: {_redact(str(e), password)}") from None
     if not ok:
         logger.error(f"MT5 login failed, error code: {_redact(str(mt5.last_error()), password)}")
         return False

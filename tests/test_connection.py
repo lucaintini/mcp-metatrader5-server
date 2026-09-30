@@ -223,6 +223,22 @@ class TestEnvCredentials:
         assert "***" in str(exc_info.value)
 
     @patch("mcp_mt5.main.mt5")
+    async def test_login_error_traceback_does_not_leak_password(self, mock_mt5, monkeypatch, caplog):
+        """The original exception is not chained, so a logged traceback cannot show the password either."""
+        monkeypatch.setenv("MT5_LOGIN", "123456")
+        monkeypatch.setenv("MT5_PASSWORD", "env_secret")
+        monkeypatch.setenv("MT5_SERVER", "EnvServer")
+        mock_mt5.login.side_effect = RuntimeError("bad password env_secret")
+
+        with caplog.at_level("DEBUG"):
+            async with Client(mcp) as client:
+                with pytest.raises(Exception) as exc_info:
+                    await client.call_tool("login", {})
+
+        assert "env_secret" not in str(exc_info.value)
+        assert "env_secret" not in caplog.text
+
+    @patch("mcp_mt5.main.mt5")
     async def test_initialize_path_from_env(self, mock_mt5, monkeypatch):
         """initialize() with no arguments uses MT5_PATH."""
         monkeypatch.setenv("MT5_PATH", "D:\\MT5\\terminal64.exe")
