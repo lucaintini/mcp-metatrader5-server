@@ -223,7 +223,9 @@ class TestEnvCredentials:
         assert "***" in str(exc_info.value)
 
     @patch("mcp_mt5.main.mt5")
-    async def test_login_error_traceback_does_not_leak_password(self, mock_mt5, monkeypatch, caplog):
+    async def test_login_error_traceback_does_not_leak_password(
+        self, mock_mt5, monkeypatch, caplog
+    ):
         """The original exception is not chained, so a logged traceback cannot show the password either."""
         monkeypatch.setenv("MT5_LOGIN", "123456")
         monkeypatch.setenv("MT5_PASSWORD", "env_secret")
